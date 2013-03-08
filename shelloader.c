@@ -16,7 +16,7 @@
  * This function parses the object file, displays and executes the shellcode
  * it is sort of messy, I may clean it up later.
 */
-int parse(char *obj_file,int *f_size) {
+int parse(char *obj_file) {
 	/* ELF variables */
 	FILE *obj;
 	Elf64_Ehdr ehdr;
@@ -109,10 +109,12 @@ int parse(char *obj_file,int *f_size) {
  * plans of adding features to it
 */
 int main(int argc, char *argv[]) {
-	int f_size;
 
+	printf("Linux 64-Bit mmap based shellcode loader by Travis \"rjkall\".\n");
+	
+	/* Just check whether we have a file argument or not*/
 	if(argc > 1) {
-		parse(argv[1],&f_size);
+		parse(argv[1]);
 	} else {
 		printf("usage: %s <file>\n",argv[0]);
 	}
