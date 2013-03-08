@@ -10,7 +10,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <elf.h>
-
+#include <assert.h>
 
 /* 
  * This function parses the object file, displays and executes the shellcode
@@ -49,7 +49,7 @@ int parse(char *obj_file,int *f_size) {
 		}
 				
 		shdr = (Elf64_Shdr *)malloc(sizeof(shdr));
-
+		
 		/*
 		 * Complicated little process here.
                  * - first we loop through the sections finding .text
@@ -85,6 +85,8 @@ int parse(char *obj_file,int *f_size) {
 				while(i<=addrlen-1) {
 					printf("\\x%02x",obj_data[i++]);
 				}
+					
+				close(obj);	
 				
 				/*
 				 * Map memory for our shellcode and execute it
@@ -95,17 +97,17 @@ int parse(char *obj_file,int *f_size) {
 				printf("\n[*] Executing shellcode...\n");
 				(*(void(*)()) shellcode)();
 				
-				/* We should never reach here */
-				return 0;
 			}
 		}
-
-		fclose(obj);
 	}
 
  return 0;
 }
 
+/*
+ * Program begins execution at this point, at the moment I don't have any further
+ * plans of adding features to it
+*/
 int main(int argc, char *argv[]) {
 	int f_size;
 
