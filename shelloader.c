@@ -2,6 +2,8 @@
  * pass it your object file and it will display and execute the shellcode
  * date 3/8/2013
  * author Travis "rjkall"
+ *
+ * NOTE: Still buggy, work in progress.
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +85,10 @@ int parse(char *obj_file,int *f_size) {
 				while(i<=addrlen-1) {
 					printf("\\x%02x",obj_data[i++]);
 				}
+				
+				/*
+				 * Map memory for our shellcode and execute it
+				*/
 			        shellcode = (unsigned char *)mmap(0,addrlen-1,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 				memcpy(shellcode, obj_data,addrlen);
 				
@@ -102,6 +108,12 @@ int parse(char *obj_file,int *f_size) {
 
 int main(int argc, char *argv[]) {
 	int f_size;
-	parse(argv[1],&f_size);
+
+	if(argc > 1) {
+		parse(argv[1],&f_size);
+	} else {
+		printf("usage: %s <file>\n",argv[0]);
+	}
+
 	return 0;
 }					
