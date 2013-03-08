@@ -7,6 +7,7 @@
  * http://www.blackhatlibrary.net
  *
  * UPDATES:
+ * - Added option to execute shell code or just display shellcode
  * - Added more verbose output for user
  * - Added null byte warning
  *------------------------------------------------------------------------
@@ -36,7 +37,7 @@
  * This function parses the object file, displays the shellcode and then sends it to execute
  * it is sort of messy, I may clean it up later.
 */
-int parse(char *obj_file) {
+int parse(char *obj_file,int exec) {
 	/* ELF variables */
 	FILE *obj;
 	Elf64_Ehdr ehdr;
@@ -71,7 +72,7 @@ int parse(char *obj_file) {
 		shdr = (Elf64_Shdr *)malloc(sizeof(shdr));
 		
 		/*
-		 * Complicated little process here.
+		 * Complicated little process here *har* *har*.
                  * - first we loop through the sections finding .text
 		 * - get size and address of .text section
 		 * - seek to offest of the data and copy it to a buffer
@@ -113,19 +114,22 @@ int parse(char *obj_file) {
           				printf("\\x%02x",obj_data[i++]);
 				}
 				
+				printf("\n");
 				close(obj);	
 				
 				/*
 				 * If null bytes were detected warn user
 				*/
 				if(nullcntr > 0) {
-					printf("\n[*] WARNING: Detected %d null bytes!",nullcntr);
+					printf("[*] WARNING: Detected %d null bytes!\n",nullcntr);
 				}
 
 				/*
 				 * Finally execute the byte code
 				*/
-				executecode(obj_data,addrlen);
+				if(exec == 1) {
+					executecode(obj_data,addrlen);
+				}
 				
 			}
 		}
@@ -141,7 +145,7 @@ int parse(char *obj_file) {
 int executecode(unsigned char *exshellcode, int shellen) {
 	unsigned char *shellcode;
 
-	printf("\n[*] Mapping and copying %d bytes of shellcode to memory.\n",shellen);	
+	printf("[*] Mapping and copying %d bytes of shellcode to memory.\n",shellen);	
 	shellcode = (unsigned char *)mmap(0,shellen-1,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
 	memcpy(shellcode, exshellcode,shellen);
 	
@@ -152,19 +156,26 @@ int executecode(unsigned char *exshellcode, int shellen) {
 }
 
 /*
- * Program begins execution at this point, at the moment I don't have any further
- * plans of adding features to it
+ * Program begins execution at this point.
+ * 
+ * At the moment I don't have any further  plans of adding features to it.
+ * I think it is a simple enough process to not overbloat this.
 */
 int main(int argc, char *argv[]) {
 
 	printf("Linux 64-Bit mmap based shellcode loader by Travis \"rjkall\".\n");
 	
 	/* Just check whether we have a file argument or not*/
-	if(argc > 1) {
-		parse(argv[1]);
+	if(argc == 2) {
+		parse(argv[1],0);
+	} else if (argc == 3) {
+		if((strncmp(argv[2],"-e",2)) == 0) {
+			parse(argv[1],1);
+		}
 	} else {
-		printf("usage: %s <file>\n",argv[0]);
-		printf("file should be an ELF object file.\n");
+		printf("usage: %s <file> [-e]\n",argv[0]);
+		printf("<file> 	ELF object file.\n");
+		printf("-e	Execute shellcode.\n");	
 	}
 
 	return 0;
