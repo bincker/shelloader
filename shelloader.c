@@ -13,7 +13,7 @@
 #include <assert.h>
 
 /* 
- * This function parses the object file, displays and executes the shellcode
+ * This function parses the object file, displays the shellcode and then sends it to execute
  * it is sort of messy, I may clean it up later.
 */
 int parse(char *obj_file) {
@@ -23,7 +23,6 @@ int parse(char *obj_file) {
 	Elf64_Shdr *shdr;
 
 	/* Misc variables for data manipulation */
-	unsigned char *shellcode;
 	int sections = 0;
 	char sname[6];
 	int i = 0;
@@ -91,17 +90,29 @@ int parse(char *obj_file) {
 				/*
 				 * Map memory for our shellcode and execute it
 				*/
-			        shellcode = (unsigned char *)mmap(0,addrlen-1,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
-				memcpy(shellcode, obj_data,addrlen);
-				
+					
 				printf("\n[*] Executing shellcode...\n");
-				(*(void(*)()) shellcode)();
+				executecode(obj_data,addrlen);
 				
 			}
 		}
 	}
 
  return 0;
+}
+
+/*
+ * copy shellcode to memory we have mapped and execute it
+ * has been known to be a bit buggy on some systems
+*/
+int executecode(unsigned char *exshellcode, int shellen) {
+	unsigned char *shellcode;
+	
+	shellcode = (unsigned char *)mmap(0,shellen-1,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+        memcpy(shellcode, exshellcode,shellen);
+	(*(void(*)()) shellcode)();
+
+	return 0;
 }
 
 /*
