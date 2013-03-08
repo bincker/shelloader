@@ -28,6 +28,7 @@ int parse(char *obj_file) {
 	int addrlen = 0;
 	int addr = 0;
 	int i = 0;
+	int nullcntr = 0;
 	
 	if((obj=fopen(obj_file,"r+b")) == NULL) {
 		printf("[*] Unable to open %s! Quitting.\n",obj_file);
@@ -82,11 +83,24 @@ int parse(char *obj_file) {
 	
 				fgets(obj_data,addrlen+1,obj);
 				while(i<=addrlen-1) {
-					printf("\\x%02x",obj_data[i++]);
+					if(strlen(obj_data) <= addrlen-1) {
+      						if(obj_data[i] == 0) {
+               						nullcntr++;
+          					}
+     					}
+
+          				printf("\\x%02x",obj_data[i++]);
 				}
-					
+				
 				close(obj);	
 				
+				/*
+				 * If null bytes were detected warn user
+				*/
+				if(nullcntr > 0) {
+					printf("\n[*] WARNING: Detected %d null bytes!",nullcntr);
+				}
+
 				/*
 				 * Finally execute the byte code
 				*/
@@ -129,6 +143,7 @@ int main(int argc, char *argv[]) {
 		parse(argv[1]);
 	} else {
 		printf("usage: %s <file>\n",argv[0]);
+		printf("file should be an ELF object file.\n");
 	}
 
 	return 0;
