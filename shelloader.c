@@ -23,11 +23,11 @@ int parse(char *obj_file) {
 	Elf64_Shdr *shdr;
 
 	/* Misc variables for data manipulation */
-	int sections = 0;
 	char sname[6];
-	int i = 0;
+	int sections = 0;
 	int addrlen = 0;
 	int addr = 0;
+	int i = 0;
 	
 	if((obj=fopen(obj_file,"r+b")) == NULL) {
 		printf("[*] Unable to open %s! Quitting.\n",obj_file);
@@ -88,28 +88,29 @@ int parse(char *obj_file) {
 				close(obj);	
 				
 				/*
-				 * Map memory for our shellcode and execute it
+				 * Finally execute the byte code
 				*/
-					
-				printf("\n[*] Executing shellcode...\n");
 				executecode(obj_data,addrlen);
 				
 			}
 		}
 	}
 
- return 0;
+	return 0;
 }
 
 /*
  * copy shellcode to memory we have mapped and execute it
- * has been known to be a bit buggy on some systems
+ * -has been known to be a bit buggy on some systems
 */
 int executecode(unsigned char *exshellcode, int shellen) {
 	unsigned char *shellcode;
-	
+
+	printf("\n[*] Mapping and copying shellcode to memory...\n");	
 	shellcode = (unsigned char *)mmap(0,shellen-1,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
-        memcpy(shellcode, exshellcode,shellen);
+	memcpy(shellcode, exshellcode,shellen);
+	
+	printf("[*] Executing %d bytes of shellcode at %p...\n",strlen(shellcode),shellcode);
 	(*(void(*)()) shellcode)();
 
 	return 0;
