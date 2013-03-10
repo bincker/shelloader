@@ -7,7 +7,8 @@
  * http://www.blackhatlibrary.net
  *
  * UPDATES:
- * - Added option to execute shell code or just display shellcode
+ * - Added line breaking for shellcode dump
+ * - Added option to execute shellcode or just display shellcode
  * - Added more verbose output for user
  * - Added null byte warning
  *------------------------------------------------------------------------
@@ -32,6 +33,9 @@
 #include <sys/mman.h>
 #include <elf.h>
 
+/* Length of shellcode line breaks */
+#define SHELL_LINE 17
+
 int parse(char *obj_file,int exec) {
 	FILE *obj;
 	Elf64_Ehdr ehdr;
@@ -41,6 +45,7 @@ int parse(char *obj_file,int exec) {
 	int addrlen  = 0;
 	int addr     = 0;
 	int nullcntr = 0;
+	int line     = 0;
 	int i        = 0;
 	
 	if((obj=fopen(obj_file, "r+b")) == NULL) {
@@ -59,8 +64,6 @@ int parse(char *obj_file,int exec) {
 		} else {
 			printf("[*] EI_MAG0 = 0x7f, continuing.\n");
 		}
-				
-		shdr = (Elf64_Shdr *)malloc(sizeof(shdr));
 		
 		/*
 		 * Complicated little process here *har* *har*.
@@ -70,6 +73,8 @@ int parse(char *obj_file,int exec) {
 		 * - display shellcode in C format
 		 * - then execute shellcode
 		*/
+		shdr = (Elf64_Shdr *)malloc(sizeof(shdr));
+
 		fseek(obj, ehdr.e_shoff, SEEK_SET);
 		fread(shdr, sizeof(*shdr), ehdr.e_shnum, obj);
 		
@@ -77,7 +82,6 @@ int parse(char *obj_file,int exec) {
 			fseek(obj, shdr[ehdr.e_shstrndx].sh_offset + shdr[sections].sh_name, SEEK_SET);
 			fgets(sname, 6, obj);
 			if((strncmp(sname, ".text", 5)) == 0) {
-
 				addr = shdr[sections].sh_offset;
 				addrlen = shdr[sections].sh_size;
 				printf("[*] Found .text section at address 0x%08x with length of %d bytes.\n", addr, addrlen);
@@ -89,8 +93,8 @@ int parse(char *obj_file,int exec) {
 				*/
 				fseek(obj, 0L, SEEK_SET);
 				fseek(obj, shdr[sections].sh_offset, SEEK_SET);
-				unsigned char obj_data[addrlen + 1];
-	
+
+				unsigned char obj_data[addrlen + 1];	
 				fgets(obj_data, addrlen + 1, obj);
 				while(i <= addrlen - 1) {
 					if(strlen(obj_data) <= addrlen - 1) {
@@ -99,7 +103,12 @@ int parse(char *obj_file,int exec) {
           					}
      					}
 
+					if(line >= SHELL_LINE) {
+						printf("\n");
+						line = 0;
+					}
           				printf("\\x%02x", obj_data[i++]);
+					line++;
 				}
 				
 				printf("\n");
@@ -124,10 +133,16 @@ int executecode(unsigned char *exshellcode, int shellen) {
 	unsigned char *shellcode;
 
 	printf("[*] Mapping and copying %d bytes of shellcode to memory.\n", shellen);	
+	
+	/*
+	 * We need to allocate an executable stack for our shellcode to run
+	 * on, so we allocate memory to copy shellcode to then execute it
+	*/
 	shellcode = (unsigned char *)mmap(0, shellen - 1, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	memcpy(shellcode, exshellcode, shellen);
 	
 	printf("[*] Executing shellcode at address %p.\n", shellcode);
+
 	( *(void(*) ()) shellcode)();
 
 	return 0;
