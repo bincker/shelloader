@@ -2,7 +2,7 @@
  *-------------------------------------------------------------------------
  * pass it your object file and it will display and execute the shellcode
  * date 3/8/2013
- * author Travis "rjkall"
+ * author Travis "rjkall" <ih4ckc0de@gmail.com>
  * http://www.blackhatlibrary.net
  *
  * UPDATES:
