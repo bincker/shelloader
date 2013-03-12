@@ -3,6 +3,7 @@
  * pass it your object file and it will display and execute the shellcode
  * date 3/8/2013
  * author Travis "rjkall"
+ * Thanks to: jtRIPper for help debugging.
  *-------------------------------------------------------------------------
  * http://www.blackhatlibrary.net
  *
@@ -33,96 +34,112 @@
 #include <sys/mman.h>
 #include <elf.h>
 
-/* Length of shellcode line breaks */
-#define SHELL_LINE 17
+#define LINE_BREAK 17
+
+struct ELFCNTR {
+	int nullcntr;
+        int line;
+        int i;
+};
+
+typedef struct {
+	char sname[6];
+	int sections;
+	int addrlen;
+        int addr;
+	struct ELFCNTR counters;
+} ELFDATA;
+
 
 int parse(char *obj_file,int exec) {
+	ELFDATA *elf;
 	FILE *obj;
 	Elf64_Ehdr ehdr;
 	Elf64_Shdr *shdr;
-	char sname[6];
-	int sections = 0;
-	int addrlen  = 0;
-	int addr     = 0;
-	int nullcntr = 0;
-	int line     = 0;
-	int i        = 0;
-	
+
 	if((obj=fopen(obj_file, "r+b")) == NULL) {
 		printf("[*] Unable to open %s! Quitting.\n", obj_file);
 		return -1;
+	}
+
+	/*
+	 * I only check EI_MAG0 not EI_MAG0-3, I figured it is good
+         * enough for this purpose.
+	*/
+	printf("[*] Examining %s...\n", obj_file);
+	fread(&ehdr,sizeof(ehdr), 1, obj);
+	if(ehdr.e_ident[EI_MAG0] != 0x7f) {
+		printf("[*] %s is not a valid ELF object file!\n", obj_file);
+		return -1;
 	} else {
-		/*
-		 * I only check EI_MAG0 not EI_MAG0-3, I figured it is good
-                 * enough for this purpose.
-		*/
-		printf("[*] Examining %s...\n", obj_file);
-		fread(&ehdr,sizeof(ehdr), 1, obj);
-		if(ehdr.e_ident[EI_MAG0] != 0x7f) {
-			printf("[*] %s is not a valid ELF object file!\n", obj_file);
-			return -1;
-		} else {
-			printf("[*] EI_MAG0 = 0x7f, continuing.\n");
-		}
+		printf("[*] EI_MAG0 = 0x7f, continuing.\n");
+	}
 		
-		/*
-		 * Complicated little process here *har* *har*.
-                 * - first we loop through the sections finding .text
-		 * - get size and address of .text section
-		 * - seek to offest of the data and copy it to a buffer
-		 * - display shellcode in C format
-		 * - then execute shellcode
-		*/
-		shdr = (Elf64_Shdr *)malloc(sizeof(shdr));
+	/*
+	 * Complicated little process here *har* *har*.
+         * - first we loop through the sections finding .text
+	 * - get size and address of .text section
+	 * - seek to offest of the data and copy it to a buffer
+	 * - display shellcode in C format
+	 * - then execute shellcode
+	*/
+	shdr = (Elf64_Shdr *)malloc(sizeof(shdr));
+	elf  = (ELFDATA *)malloc(sizeof(ELFDATA));
+	elf->addrlen = 0;
+        elf->addr    = 0;
+        elf->counters.nullcntr  = 0;
+        elf->counters.line      = 0;
+        elf->counters.i         = 0;
 
-		fseek(obj, ehdr.e_shoff, SEEK_SET);
-		fread(shdr, sizeof(*shdr), ehdr.e_shnum, obj);
+	fseek(obj, ehdr.e_shoff, SEEK_SET);
+	fread(shdr, sizeof(*shdr), ehdr.e_shnum, obj);
+
+	while(elf->sections++ < ehdr.e_shnum) {			
+		fseek(obj, shdr[ehdr.e_shstrndx].sh_offset + shdr[elf->sections].sh_name, SEEK_SET);
+		fgets(elf->sname, 6, obj);
+		if((strncmp(elf->sname, ".text", 5)) == 0) {
+			elf->addr = shdr[elf->sections].sh_offset;
+			elf->addrlen = shdr[elf->sections].sh_size;
+				
+			printf("[*] Found .text section at address 0x%08x with length of %d bytes.\n", elf->addr, elf->addrlen);
+			printf("[*] Dumping shellcode.\n");
 		
-		while(sections++ < ehdr.e_shnum) {			
-			fseek(obj, shdr[ehdr.e_shstrndx].sh_offset + shdr[sections].sh_name, SEEK_SET);
-			fgets(sname, 6, obj);
-			if((strncmp(sname, ".text", 5)) == 0) {
-				addr = shdr[sections].sh_offset;
-				addrlen = shdr[sections].sh_size;
-				printf("[*] Found .text section at address 0x%08x with length of %d bytes.\n", addr, addrlen);
-				printf("[*] Dumping shellcode.\n");
-		
-				/*
-				 * sh_offset is the offset of the section data from the beginning
-                                 * of the file so we seek to the beginning THEN the offset
-				*/
-				fseek(obj, 0L, SEEK_SET);
-				fseek(obj, shdr[sections].sh_offset, SEEK_SET);
+			/*
+			 * sh_offset is the offset of the section data from the beginning
+                         * of the file so we seek to the beginning THEN the offset
+			*/
+			fseek(obj, 0L, SEEK_SET);
+			fseek(obj, shdr[elf->sections].sh_offset, SEEK_SET);
 
-				unsigned char obj_data[addrlen + 1];	
-				fgets(obj_data, addrlen + 1, obj);
-				while(i <= addrlen - 1) {
-					if(strlen(obj_data) <= addrlen - 1) {
-      						if(obj_data[i] == 0) {
-               						nullcntr++;
-          					}
-     					}
+			unsigned char obj_data[elf->addrlen + 1];	
+			fgets(obj_data, elf->addrlen + 1, obj);
+			while(elf->counters.i <= elf->addrlen - 1) {
 
-					if(line >= SHELL_LINE) {
-						printf("\n");
-						line = 0;
+				if(strlen(obj_data) <= elf->addrlen - 1) {
+     					if(obj_data[elf->counters.i] == 0) {
+               					elf->counters.nullcntr++;
 					}
-          				printf("\\x%02x", obj_data[i++]);
-					line++;
-				}
-				
-				printf("\n");
-				close(obj);	
-				
-				if(nullcntr > 0) {
-					printf("[*] WARNING: Detected %d null bytes!\n", nullcntr);
+     				}
+					
+				if(elf->counters.line >= LINE_BREAK) {
+					printf("\n");
+					elf->counters.line = 0;
 				}
 
-				if(exec == 1) {
-					executecode(obj_data, addrlen);
-				}
-				
+          			printf("\\x%02x", obj_data[elf->counters.i++]);
+				elf->counters.line++;
 			}
+				
+			printf("\n");
+			close(obj);	
+			if(elf->counters.nullcntr > 0) {
+				printf("[*] WARNING: Detected %d null bytes!\n", elf->counters.nullcntr);
+			}
+
+			if(exec == 1) {
+				executecode(obj_data, elf->addrlen);
+			}
+				
 		}
 	}
 
