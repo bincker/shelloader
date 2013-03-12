@@ -3,11 +3,9 @@
  * pass it your object file and it will display and execute the shellcode
  * date 3/8/2013
  * author Travis "rjkall"
- * Thanks to: jtRIPper for help debugging.
- *-------------------------------------------------------------------------
- * http://www.blackhatlibrary.net
  *
  * UPDATES:
+ * - Variable fixes, check entire e_ident now
  * - Added line breaking for shellcode dump
  * - Added option to execute shellcode or just display shellcode
  * - Added more verbose output for user
@@ -68,7 +66,7 @@ int parse(char *obj_file,int exec) {
 	*/
 	printf("[*] Examining %s...\n", obj_file);
 	fread(&ehdr,sizeof(ehdr), 1, obj);
-	if(ehdr.e_ident[EI_MAG0] != 0x7f) {
+	if(strncmp(ehdr.e_ident,ELFMAG,4) != 0) {
 		printf("[*] %s is not a valid ELF object file!\n", obj_file);
 		return -1;
 	} else {
@@ -95,8 +93,10 @@ int parse(char *obj_file,int exec) {
 	fread(shdr, sizeof(*shdr), ehdr.e_shnum, obj);
 
 	while(elf->sections++ < ehdr.e_shnum) {			
+		
 		fseek(obj, shdr[ehdr.e_shstrndx].sh_offset + shdr[elf->sections].sh_name, SEEK_SET);
 		fgets(elf->sname, 6, obj);
+		
 		if((strncmp(elf->sname, ".text", 5)) == 0) {
 			elf->addr = shdr[elf->sections].sh_offset;
 			elf->addrlen = shdr[elf->sections].sh_size;
@@ -112,6 +112,7 @@ int parse(char *obj_file,int exec) {
 			fseek(obj, shdr[elf->sections].sh_offset, SEEK_SET);
 
 			unsigned char obj_data[elf->addrlen + 1];	
+		
 			fgets(obj_data, elf->addrlen + 1, obj);
 			while(elf->counters.i <= elf->addrlen - 1) {
 
@@ -132,6 +133,7 @@ int parse(char *obj_file,int exec) {
 				
 			printf("\n");
 			close(obj);	
+			
 			if(elf->counters.nullcntr > 0) {
 				printf("[*] WARNING: Detected %d null bytes!\n", elf->counters.nullcntr);
 			}
