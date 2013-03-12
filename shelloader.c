@@ -3,6 +3,7 @@
  * pass it your object file and it will display and execute the shellcode
  * date 3/8/2013
  * author Travis "rjkall"
+ * http://www.blackhatlibrary.net
  *
  * UPDATES:
  * - Variable fixes, check entire e_ident now
