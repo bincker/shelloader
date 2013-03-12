@@ -50,7 +50,7 @@ typedef struct {
 } ELFDATA;
 
 
-int parse(char *obj_file,int exec) {
+int parse(char *obj_file, int exec) {
 	ELFDATA *elf;
 	FILE *obj;
 	Elf64_Ehdr ehdr;
@@ -94,52 +94,54 @@ int parse(char *obj_file,int exec) {
 		fseek(obj, shdr[ehdr.e_shstrndx].sh_offset + shdr[elf->sections].sh_name, SEEK_SET);
 		fgets(elf->sname, 6, obj);
 		
-		if((strncmp(elf->sname, ".text", 5)) == 0) {
-			elf->addr = shdr[elf->sections].sh_offset;
-			elf->addrlen = shdr[elf->sections].sh_size;
-				
-			printf("[*] Found .text section at address 0x%08x with length of %d bytes.\n", elf->addr, elf->addrlen);
-			printf("[*] Dumping shellcode.\n");
-		
-			/*
-			 * sh_offset is the offset of the section data from the beginning
-                         * of the file so we seek to the beginning THEN the offset
-			*/
-			fseek(obj, 0L, SEEK_SET);
-			fseek(obj, shdr[elf->sections].sh_offset, SEEK_SET);
-
-			unsigned char obj_data[elf->addrlen + 1];	
-		
-			fgets(obj_data, elf->addrlen + 1, obj);
-			while(elf->counters.i <= elf->addrlen - 1) {
-
-				if(strlen(obj_data) <= elf->addrlen - 1) {
-     					if(obj_data[elf->counters.i] == 0) {
-               					elf->counters.nullcntr++;
-					}
-     				}
-					
-				if(elf->counters.line >= LINE_BREAK) {
-					printf("\n");
-					elf->counters.line = 0;
-				}
-
-          			printf("\\x%02x", obj_data[elf->counters.i++]);
-				elf->counters.line++;
-			}
-				
-			printf("\n");
-			close(obj);	
-			
-			if(elf->counters.nullcntr > 0) {
-				printf("[*] WARNING: Detected %d null bytes!\n", elf->counters.nullcntr);
-			}
-
-			if(exec == 1) {
-				executecode(obj_data, elf->addrlen);
-			}
-				
+		if((strncmp(elf->sname, ".text", 5)) != 0) {
+			continue;
 		}
+
+		elf->addr = shdr[elf->sections].sh_offset;
+		elf->addrlen = shdr[elf->sections].sh_size;
+				
+		printf("[*] Found .text section at address 0x%08x with length of %d bytes.\n", elf->addr, elf->addrlen);
+		printf("[*] Dumping shellcode.\n");
+		
+		/*
+		 * sh_offset is the offset of the section data from the beginning
+                 * of the file so we seek to the beginning THEN the offset
+		*/
+		fseek(obj, 0L, SEEK_SET);
+		fseek(obj, shdr[elf->sections].sh_offset, SEEK_SET);
+
+		unsigned char obj_data[elf->addrlen + 1];	
+		
+		fgets(obj_data, elf->addrlen + 1, obj);
+		while(elf->counters.i <= elf->addrlen - 1) {
+
+			if(strlen(obj_data) <= elf->addrlen - 1) {
+   				if(obj_data[elf->counters.i] == 0) {
+               				elf->counters.nullcntr++;
+				}
+     			}
+					
+			if(elf->counters.line >= LINE_BREAK) {
+				printf("\n");
+				elf->counters.line = 0;
+			}
+
+          		printf("\\x%02x", obj_data[elf->counters.i++]);
+			elf->counters.line++;
+		}
+				
+		printf("\n");
+		close(obj);	
+		
+		if(elf->counters.nullcntr > 0) {
+			printf("[*] WARNING: Detected %d null bytes!\n", elf->counters.nullcntr);
+		}
+
+		if(exec == 1) {
+			executecode(obj_data, elf->addrlen);
+		}			
+
 	}
 
 	return 0;
