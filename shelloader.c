@@ -161,6 +161,7 @@ int executecode(unsigned char *exshellcode, int shellen) {
 }
 
 int usage(char *pname) {
+	 printf("Linux 64-Bit mmap based shellcode loader by Travis \"rjkall\".\n");
 	 printf("usage: %s <file> [-e]\n", pname);
          printf("<file>  ELF object file.\n");
          printf("-e      Execute shellcode.\n\n");
@@ -168,21 +169,20 @@ int usage(char *pname) {
 }
 
 int main(int argc, char *argv[]) {
-	printf("Linux 64-Bit mmap based shellcode loader by Travis \"rjkall\".\n");
-	
-	if(argc == 2) {
-		parse(argv[1], 0);
-	} else if (argc == 3) {
-		
-		if((strncmp(argv[2], "-e", 2)) == 0) {
-			parse(argv[1], 1);
-		} else {
+	switch(argc) {
+		case 2:
+			parse(argv[1],0);
+			break;
+		case 3:
+			if((strncmp(argv[2], "-e", 2)) == 0) {
+                        	parse(argv[1], 1);
+                	} else {
+                        	usage(argv[0]);
+			}
+                	break;
+		default:
 			usage(argv[0]);
-		}
-
-	} else {
-		usage(argv[0]);
 	}
 
 	return 0;
-}					
+}	
