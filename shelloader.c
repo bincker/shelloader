@@ -61,10 +61,6 @@ int parse(char *obj_file,int exec) {
 		return -1;
 	}
 
-	/*
-	 * I only check EI_MAG0 not EI_MAG0-3, I figured it is good
-         * enough for this purpose.
-	*/
 	printf("[*] Examining %s...\n", obj_file);
 	fread(&ehdr,sizeof(ehdr), 1, obj);
 	if(strncmp(ehdr.e_ident,ELFMAG,4) != 0) {
@@ -154,10 +150,6 @@ int executecode(unsigned char *exshellcode, int shellen) {
 
 	printf("[*] Mapping and copying %d bytes of shellcode to memory.\n", shellen);	
 	
-	/*
-	 * We need to allocate an executable stack for our shellcode to run
-	 * on, so we allocate memory to copy shellcode to then execute it
-	*/
 	shellcode = (unsigned char *)mmap(0, shellen - 1, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	memcpy(shellcode, exshellcode, shellen);
 	
