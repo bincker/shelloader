@@ -33,6 +33,7 @@
 #include <sys/mman.h>
 #include <elf.h>
 
+#define MMAP_PARAMS PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS
 #define LINE_BREAK 17
 
 struct ELFCNTR {
@@ -152,7 +153,7 @@ int executecode(unsigned char *exshellcode, int shellen) {
 
 	printf("[*] Mapping and copying %d bytes of shellcode to memory.\n", shellen);	
 	
-	shellcode = (unsigned char *)mmap(0, shellen - 1, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	shellcode = (unsigned char *)mmap(0, shellen - 1, MMAP_PARAMS, -1, 0);
 	memcpy(shellcode, exshellcode, shellen);
 	
 	printf("[*] Executing shellcode at address %p.\n", shellcode);
