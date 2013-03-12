@@ -6,7 +6,7 @@
  * http://www.blackhatlibrary.net
  *
  * UPDATES:
- * - Variable fixes, check entire e_ident now
+ * - Variable fixes, usage,  check entire e_ident now
  * - Added line breaking for shellcode dump
  * - Added option to execute shellcode or just display shellcode
  * - Added more verbose output for user
@@ -70,9 +70,9 @@ int parse(char *obj_file,int exec) {
 	if(strncmp(ehdr.e_ident,ELFMAG,4) != 0) {
 		printf("[*] %s is not a valid ELF object file!\n", obj_file);
 		return -1;
-	} else {
-		printf("[*] EI_MAG0 = 0x7f, continuing.\n");
-	}
+	} 
+
+	printf("[*] e_ident = 0x7f+ELF, continuing.\n");
 		
 	/*
 	 * Complicated little process here *har* *har*.
@@ -168,19 +168,28 @@ int executecode(unsigned char *exshellcode, int shellen) {
 	return 0;
 }
 
+int usage(char *pname) {
+	 printf("usage: %s <file> [-e]\n", pname);
+         printf("<file>  ELF object file.\n");
+         printf("-e      Execute shellcode.\n\n");
+	 printf("Default will just dump shellcode in C format.\n");
+}
+
 int main(int argc, char *argv[]) {
 	printf("Linux 64-Bit mmap based shellcode loader by Travis \"rjkall\".\n");
 	
 	if(argc == 2) {
 		parse(argv[1], 0);
 	} else if (argc == 3) {
+		
 		if((strncmp(argv[2], "-e", 2)) == 0) {
 			parse(argv[1], 1);
+		} else {
+			usage(argv[0]);
 		}
+
 	} else {
-		printf("usage: %s <file> [-e]\n", argv[0]);
-		printf("<file> 	ELF object file.\n");
-		printf("-e	Execute shellcode.\n");	
+		usage(argv[0]);
 	}
 
 	return 0;
