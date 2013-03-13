@@ -6,7 +6,8 @@ has the ability to execute the shellcode.
 
 ### Video showing an earlier demonstration
 
-<a href="http://www.youtube.com/watch?v=SNp7Tltc1wM">http://www.youtube.com/watch?v=SNp7Tltc1wM</a>
+<a href="http://www.youtube.com/watch?v=SNp7Tltc1wM">http://www.youtube.com/watch?v=SNp7Tltc1wM</a><br><br>
+<img src="http://i.imgur.com/XqKhefg.jpg"></img>
 
 Build
 -----
