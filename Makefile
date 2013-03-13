@@ -11,5 +11,9 @@ NAME=shelloader
 
 all:
 	$(CC) -o $(NAME) $(INCLUDE) shelloader.c
+install:
+	install -D -m 755 ./$(NAME) /usr/bin/$(NAME)
+remove:
+	rm -fr /usr/bin/$(NAME)
 clean:
 	rm -rf shelloader.o $(NAME)
