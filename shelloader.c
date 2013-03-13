@@ -138,7 +138,7 @@ int executecode(unsigned char *exshellcode, int shellen) {
 	}
 	memcpy(shellcode, exshellcode, shellen);
 	
-	printf("%s->%s Executing shellcode at address %p.\n", GRAY, STOP, shellcode);
+	printf("%s-->%s Executing shellcode at address %p.\n", GRAY, STOP, shellcode);
 	( *(void(*) ()) shellcode)();
 
 	return 0;
