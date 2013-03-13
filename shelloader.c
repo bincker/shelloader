@@ -6,7 +6,7 @@
  * http://www.blackhatlibrary.net
  *
  * UPDATES:
- * - Variable fixes, usage,  check entire e_ident now
+ * - Error checking, variable fixes, usage, check entire e_ident now
  * - Added line breaking for shellcode dump
  * - Added option to execute shellcode or just display shellcode
  * - Added more verbose output for user
@@ -30,11 +30,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <assert.h>
 #include <sys/mman.h>
 #include <elf.h>
 
 #define MMAP_PARAMS PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS
-#define LINE_BREAK 17
+#define LINE_BREAK  17
+#define CODE_SECTION ".text"
 
 struct ELFCNTR {
 	int nullcntr;
@@ -58,7 +61,7 @@ int parse(char *obj_file, int exec) {
 	Elf64_Shdr *shdr;
 
 	if((obj=fopen(obj_file, "r+b")) == NULL) {
-		printf("[*] Unable to open %s! Quitting.\n", obj_file);
+		fprintf(stderr,"[*] Unable to open %s, %s.\n", obj_file, strerror(errno));
 		return -1;
 	}
 
@@ -80,7 +83,10 @@ int parse(char *obj_file, int exec) {
 	 * - then execute shellcode
 	*/
 	shdr = (Elf64_Shdr *)malloc(sizeof(shdr));
+	assert(shdr);
 	elf  = (ELFDATA *)malloc(sizeof(ELFDATA));
+	assert(elf);
+
 	elf->addrlen = 0;
         elf->addr    = 0;
         elf->counters.nullcntr  = 0;
@@ -95,7 +101,7 @@ int parse(char *obj_file, int exec) {
 		fseek(obj, shdr[ehdr.e_shstrndx].sh_offset + shdr[elf->sections].sh_name, SEEK_SET);
 		fgets(elf->sname, 6, obj);
 		
-		if((strncmp(elf->sname, ".text", 5)) != 0) {
+		if((strncmp(elf->sname, CODE_SECTION, 5)) != 0) {
 			continue;
 		}
 
@@ -134,7 +140,7 @@ int parse(char *obj_file, int exec) {
 				
 		printf("\n");
 		close(obj);	
-		
+	
 		if(elf->counters.nullcntr > 0) {
 			printf("[*] WARNING: Detected %d null bytes!\n", elf->counters.nullcntr);
 		}
@@ -144,7 +150,7 @@ int parse(char *obj_file, int exec) {
 		}			
 
 	}
-
+	
 	return 0;
 }
 
@@ -154,24 +160,28 @@ int executecode(unsigned char *exshellcode, int shellen) {
 	printf("[*] Mapping and copying %d bytes of shellcode to memory.\n", shellen);	
 	
 	shellcode = (unsigned char *)mmap(0, shellen - 1, MMAP_PARAMS, -1, 0);
+	if(shellcode == MAP_FAILED) {
+		fprintf(stderr,"[*] mmap error, %s\n",strerror(errno));
+		return -1;
+	}
 	memcpy(shellcode, exshellcode, shellen);
 	
 	printf("[*] Executing shellcode at address %p.\n", shellcode);
-
 	( *(void(*) ()) shellcode)();
 
 	return 0;
 }
 
 int usage(char *pname) {
-	 printf("Linux 64-Bit mmap based shellcode loader by Travis \"rjkall\".\n");
-	 printf("usage: %s <file> [-e]\n", pname);
-         printf("<file>  ELF object file.\n");
-         printf("-e      Execute shellcode.\n\n");
+	 printf("usage: %s <object-file> [-e]\n", pname);
+         printf("<object-file>  ELF object file.\n");
+         printf("-e             OPTIONAL: Execute shellcode.\n\n");
 	 printf("Default will just dump shellcode in C format.\n");
 }
 
 int main(int argc, char *argv[]) {
+	printf("Linux 64-Bit mmap based shellcode loader by Travis \"rjkall\".\n");
+	printf("Bugs, requests to <rjtravis@hushmail.com>\n");
 	switch(argc) {
 		case 2:
 			parse(argv[1],0);
