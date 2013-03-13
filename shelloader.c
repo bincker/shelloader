@@ -30,19 +30,20 @@
 #include <shelloader.h>
 
 int parse(char *obj_file, int exec) {
+	
 	if((obj=fopen(obj_file, "r+b")) == NULL) {
-		fprintf(stderr,"%s[*]%s Unable to open %s, %s.\n", COLOR_RED, COLOR_STOP, obj_file, strerror(errno));
+		fprintf(stderr,"%s[*]%s Unable to open %s, %s.\n", RED, STOP, obj_file, strerror(errno));
 		return -1;
 	}
 
-	printf("%s[*]%s Examining %s...\n", COLOR_GRAY, COLOR_STOP, obj_file);
+	printf("%s[*]%s Examining %s...\n", GRAY, STOP, obj_file);
 	fread(&ehdr,sizeof(ehdr), 1, obj);
 	if(strncmp(ehdr.e_ident,ELFMAG,4) != 0) {
-		printf("%s[*]%s %s is not a valid ELF object file!\n", COLOR_RED, COLOR_STOP, obj_file);
+		printf("%s[*]%s %s is not a valid ELF object file!\n", RED, STOP, obj_file);
 		return -1;
 	} 
 
-	printf("%s[*]%s e_ident = 0x7f+ELF, continuing.\n",COLOR_GRAY, COLOR_STOP);
+	printf("%s[*]%s e_ident = 0x7f+ELF, continuing.\n", GRAY, STOP);
 		
 	/*
 	 * Complicated little process here *har* *har*.
@@ -78,8 +79,8 @@ int parse(char *obj_file, int exec) {
 		elf->addr = shdr[elf->sections].sh_offset;
 		elf->addrlen = shdr[elf->sections].sh_size;
 				
-		printf("%s[*]%s Found '.text' section at address 0x%08x with length of %d bytes.\n", COLOR_GRAY, COLOR_STOP, elf->addr, elf->addrlen);
-		printf("%s[*]%s Dumping shellcode.\n", COLOR_GRAY,COLOR_STOP);
+		printf("%s[*]%s Found '.text' section at address 0x%08x with length of %d bytes.\n", GRAY, STOP, elf->addr, elf->addrlen);
+		printf("%s[*]%s Dumping shellcode.\n", GRAY, STOP);
 		
 		/*
 		 * sh_offset is the offset of the section data from the beginning
@@ -91,7 +92,7 @@ int parse(char *obj_file, int exec) {
 		unsigned char obj_data[elf->addrlen + 1];	
 		
 		fgets(obj_data, elf->addrlen + 1, obj);
-		printf("\nshellcode {%s\n\t", COLOR_BLUE);
+		printf("\nshellcode {%s\n\t", BLUE);
 		while(elf->counters.i <= elf->addrlen - 1) {
 
 			if(strlen(obj_data) <= elf->addrlen - 1) {
@@ -109,11 +110,11 @@ int parse(char *obj_file, int exec) {
 			elf->counters.line++;
 		}
 				
-		printf("%s\n}\n\n",COLOR_STOP);
+		printf("%s\n}\n\n", STOP);
 		close(obj);	
 	
 		if(elf->counters.nullcntr > 0) {
-			printf("%s[*] WARNING:%s Detected %d null bytes!\n",COLOR_RED,COLOR_STOP, elf->counters.nullcntr);
+			printf("%s[*] WARNING:%s Detected %d null bytes!\n", RED, STOP, elf->counters.nullcntr);
 		}
 
 		if(exec == 1) {
@@ -128,16 +129,16 @@ int parse(char *obj_file, int exec) {
 int executecode(unsigned char *exshellcode, int shellen) {
 	unsigned char *shellcode;
 
-	printf("%s[*]%s Mapping and copying %d bytes of shellcode to memory.\n", COLOR_GRAY, COLOR_STOP, shellen);	
+	printf("%s[*]%s Mapping and copying %d bytes of shellcode to memory.\n", GRAY, STOP, shellen);	
 	
 	shellcode = (unsigned char *)mmap(0, shellen, MMAP_PARAMS, -1, 0);
 	if(shellcode == MAP_FAILED) {
-		fprintf(stderr,"%s[*]%s mmap error, %s\n",COLOR_RED,COLOR_STOP,strerror(errno));
+		fprintf(stderr,"%s[*]%s mmap error, %s\n", RED, STOP,strerror(errno));
 		return -1;
 	}
 	memcpy(shellcode, exshellcode, shellen);
 	
-	printf("%s->%s Executing shellcode at address %p.\n", COLOR_GRAY, COLOR_STOP, shellcode);
+	printf("%s->%s Executing shellcode at address %p.\n", GRAY, STOP, shellcode);
 	( *(void(*) ()) shellcode)();
 
 	return 0;

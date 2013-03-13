@@ -31,10 +31,10 @@
 #define LINE_BREAK   17
 #define CODE_SECTION ".text"
 
-#define COLOR_BLUE   "\033[0;33m"
-#define COLOR_GRAY   "\033[0;37m"
-#define COLOR_RED    "\033[1;31m"
-#define COLOR_STOP   "\033[1;0m"
+#define BLUE "\033[0;33m"
+#define GRAY "\033[0;37m"
+#define RED  "\033[1;31m"
+#define STOP "\033[1;0m"
 
 struct ELFCNTR {
         int nullcntr;
