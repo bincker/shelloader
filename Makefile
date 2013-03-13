@@ -1,7 +1,8 @@
 CC=gcc
-FILE=shelloader
+INCLUDE = -I./include
+NAME=shelloader
 
 all:
-	$(CC) -o $(FILE) shelloader.c
+	$(CC) -o $(NAME) $(INCLUDE) shelloader.c
 clean:
-	rm -rf shelloader.o shelloader
+	rm -rf shelloader.o $(NAME)
