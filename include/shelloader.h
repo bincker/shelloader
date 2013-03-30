@@ -28,7 +28,7 @@
 
 
 #define MMAP_PARAMS PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS
-#define LINE_BREAK   17
+#define LINE_BREAK   18
 #define CODE_SECTION ".text"
 
 #define BLUE "\033[0;33m"
