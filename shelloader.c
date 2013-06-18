@@ -72,9 +72,8 @@ int parse(char *obj_file, int exec) {
 		fseek(obj, shdr[ehdr.e_shstrndx].sh_offset + shdr[elf->sections].sh_name, SEEK_SET);
 		fgets(elf->sname, 6, obj);
 		
-		if((strncmp(elf->sname, CODE_SECTION, 5)) != 0) {
+		if((strncmp(elf->sname, CODE_SECTION, 5)) != 0)
 			continue;
-		}
 
 		elf->addr = shdr[elf->sections].sh_offset;
 		elf->addrlen = shdr[elf->sections].sh_size;
@@ -154,7 +153,6 @@ int usage(char *pname) {
 
 int main(int argc, char *argv[]) {
 	printf("Linux 64-Bit mmap based shellcode loader by Travis \"rjkall\".\n");
-	printf("Bugs, requests to <rjtravis@hushmail.com>\n");
 	switch(argc) {
 		case 2:
 			parse(argv[1],0);
